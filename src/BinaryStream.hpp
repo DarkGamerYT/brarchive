@@ -1,8 +1,17 @@
-#include "brarchive.hpp"
-namespace brarchive
+#pragma once
+#include <fstream>
+
+class BinaryStream
 {
+public:
+	std::fstream& mStream;
+
+public:
+	BinaryStream(std::fstream& stream)
+		: mStream(stream) {};
+
 	// Readers
-	uint8_t BinaryStream::readByte()
+	uint8_t readByte()
 	{
 		uint8_t value = 0;
 		mStream.read(reinterpret_cast<char*>(&value), sizeof(value));
@@ -11,7 +20,7 @@ namespace brarchive
 	};
 
 	template<typename T>
-	T BinaryStream::read(std::size_t length)
+	T read(std::size_t length)
 	{
 		std::vector<uint8_t> bytes(length);
 		mStream.read(reinterpret_cast<char*>(bytes.data()), length);
@@ -24,7 +33,7 @@ namespace brarchive
 	};
 
 	template<typename T>
-	T BinaryStream::readBigEndian(std::size_t length)
+	T readBigEndian(std::size_t length)
 	{
 		std::vector<uint8_t> bytes(length);
 		mStream.read(reinterpret_cast<char*>(bytes.data()), length);
@@ -36,54 +45,54 @@ namespace brarchive
 		return value;
 	};
 
-	uint32_t BinaryStream::readUnsignedInt()
+	uint32_t readUnsignedInt()
 	{
 		return this->read<uint32_t>(4);
 	};
-	int32_t BinaryStream::readInt()
+	int32_t readInt()
 	{
 		uint32_t raw = this->readUnsignedInt();
 		return *(int32_t*)&raw;
 	};
 
-	uint32_t BinaryStream::readBigEndianUnsignedInt()
+	uint32_t readBigEndianUnsignedInt()
 	{
 		return this->readBigEndian<uint32_t>(4);
 	};
-	int32_t BinaryStream::readBigEndianInt()
+	int32_t readBigEndianInt()
 	{
 		uint32_t raw = this->readBigEndianUnsignedInt();
 		return *(int32_t*)&raw;
 	};
 
-	uint64_t BinaryStream::readUnsignedLong()
+	uint64_t readUnsignedLong()
 	{
 		return this->read<uint64_t>(8);
 	};
-	int64_t BinaryStream::readLong()
+	int64_t readLong()
 	{
 		uint64_t raw = this->readUnsignedLong();
 		return *(int64_t*)&raw;
 	};
 
-	uint64_t BinaryStream::readBigEndianUnsignedLong()
+	uint64_t readBigEndianUnsignedLong()
 	{
 		return this->readBigEndian<uint64_t>(8);
 	};
-	int64_t BinaryStream::readBigEndianLong()
+	int64_t readBigEndianLong()
 	{
 		uint64_t raw = this->readBigEndianUnsignedLong();
 		return *(int64_t*)&raw;
 	};
 
-	std::string BinaryStream::readString(std::size_t length)
+	std::string readString(std::size_t length)
 	{
 		std::string result(length, '\0');
 		mStream.read(result.data(), length);
 		return result;
 	};
 
-	std::string BinaryStream::readString()
+	std::string readString()
 	{
 		std::streampos currentPos = mStream.tellg();
 		mStream.seekg(0, std::ios::end);
@@ -97,13 +106,13 @@ namespace brarchive
 
 
 	// Writers
-	void BinaryStream::writeByte(uint8_t value)
+	void writeByte(uint8_t value)
 	{
 		mStream.write(reinterpret_cast<const char*>(&value), sizeof(value));
 	};
 
 	template<typename T>
-	void BinaryStream::write(T value, int count)
+	void write(T value, int count)
 	{
 		for (int i = 0; i < count; i++)
 		{
@@ -113,7 +122,7 @@ namespace brarchive
 	};
 
 	template<typename T>
-	void BinaryStream::writeBigEndian(T value, int count)
+	void writeBigEndian(T value, int count)
 	{
 		for (int i = count - 1; i >= 0; i--)
 		{
@@ -122,43 +131,43 @@ namespace brarchive
 		};
 	};
 
-	void BinaryStream::writeUnsignedInt(uint32_t value)
+	void writeUnsignedInt(uint32_t value)
 	{
 		this->write<uint32_t>(value, 4);
 	};
-	void BinaryStream::writeInt(int32_t value)
+	void writeInt(int32_t value)
 	{
 		this->writeUnsignedInt(value & 0xffffffff);
 	};
 
-	void BinaryStream::writeBigEndianUnsignedInt(uint32_t value)
+	void writeBigEndianUnsignedInt(uint32_t value)
 	{
 		this->writeBigEndian<uint32_t>(value, 4);
 	};
-	void BinaryStream::writeBigEndianInt(int32_t value)
+	void writeBigEndianInt(int32_t value)
 	{
 		this->writeBigEndianUnsignedInt(value & 0xffffffff);
 	};
 
-	void BinaryStream::writeUnsignedLong(uint64_t value)
+	void writeUnsignedLong(uint64_t value)
 	{
 		this->write<uint64_t>(value, 8);
 	};
-	void BinaryStream::writeLong(int64_t value)
+	void writeLong(int64_t value)
 	{
 		this->writeUnsignedLong(value & 0xffffffffffffffff);
 	};
 
-	void BinaryStream::writeBigEndianUnsignedLong(uint64_t value)
+	void writeBigEndianUnsignedLong(uint64_t value)
 	{
 		this->writeBigEndian<uint64_t>(value, 8);
 	};
-	void BinaryStream::writeBigEndianLong(int64_t value)
+	void writeBigEndianLong(int64_t value)
 	{
 		this->writeBigEndianUnsignedLong(value & 0xffffffffffffffff);
 	};
 
-	void BinaryStream::writeString(const std::string& str, uint8_t max_length)
+	void writeString(const std::string& str, uint8_t max_length)
 	{
 		uint8_t name_length = std::min(static_cast<uint8_t>(str.size()), max_length);
 		this->writeByte(name_length);

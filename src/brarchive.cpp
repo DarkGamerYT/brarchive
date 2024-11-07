@@ -11,8 +11,7 @@ std::vector<brarchive::FileEntry> brarchive::read(const std::filesystem::path& p
 	BinaryStream stream{ archive };
 	uint64_t header = stream.readBigEndianUnsignedLong(); // Magic number
 
-	// Verify header
-	if (header != brarchive::HEADER)
+	if (!brarchive::verify_header(header))
 	{
 		std::cerr << "Invalid archive header for file: " << path << std::endl;
 		return {};
@@ -36,10 +35,18 @@ std::vector<brarchive::FileEntry> brarchive::read(const std::filesystem::path& p
 
 	// Read rest of file content
 	const std::string& content = stream.readString();
+	archive.close();
 
 	for (FileEntry& file : files)
 	{
-		file.data = content.substr(file.offset, file.length);
+		rapidjson::Document json;
+		json.Parse<rapidjson::kParseCommentsFlag>(content.substr(file.offset, file.length).c_str());
+
+		rapidjson::StringBuffer buffer;
+		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+		json.Accept(writer);
+
+		file.data = buffer.GetString();
 	};
 
 	return files;
@@ -56,40 +63,34 @@ void brarchive::write(const std::filesystem::path& path, const std::filesystem::
 	};
 
 	BinaryStream stream{ output };
-	stream.writeBigEndianUnsignedLong(brarchive::HEADER); // Writes the magic number
 
 	std::vector<FileEntry> files = {};
-	for (const auto& entry : std::filesystem::recursive_directory_iterator(path))
+	for (const auto& entry : std::filesystem::directory_iterator(path))
 	{
 		if (!entry.is_regular_file())
 			continue;
 
-		FileEntry file;
-		file.name = entry.path().filename().string();
-
-		if (entry.path().extension() == ".json")
-			file.length = static_cast<uint32_t>(std::filesystem::file_size(entry.path()));
-		else file.length = 0;
-
-		files.push_back(file);
+		files.push_back({ entry.path().filename().string() });
 	};
 
+	if (files.size() == 0)
+	{
+		output.close();
+		std::filesystem::remove(out.string() + ".brarchive");
+		return;
+	};
+
+	stream.writeBigEndianUnsignedLong(brarchive::HEADER); // Writes the magic number
 	stream.writeUnsignedInt(static_cast<uint32_t>(files.size())); // Number of entries
 	stream.writeUnsignedInt(1); // Version
 
-	// Writes file entries (name, offset, and length)
-	uint32_t offset = 0;
 	for (FileEntry& file : files)
 	{
 		stream.writeString(file.name, 247);
-
-		stream.writeUnsignedInt(offset);
-		stream.writeUnsignedInt(file.length);
-		offset += file.length;
 	};
 
-	// Writes file content at the end of the .brarchive file
-	for (const auto& file : files) {
+	uint32_t offset = 0;
+	for (auto& file : files) {
 		std::filesystem::path file_path = path / file.name;
 		std::ifstream input(file_path, std::ios::binary);
 		if (!input)
@@ -98,9 +99,31 @@ void brarchive::write(const std::filesystem::path& path, const std::filesystem::
 			continue;
 		};
 
-		std::vector<char> data(file.length);
-		input.read(data.data(), file.length);
+		std::stringstream string;
+		string << input.rdbuf();
+		const std::string& data = string.str();
 
-		stream.mStream.write(data.data(), file.length);
+
+		rapidjson::Document json;
+		json.Parse<rapidjson::kParseCommentsFlag>(data.c_str());
+
+		rapidjson::StringBuffer buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		json.Accept(writer);
+
+
+		const std::string& str = buffer.GetString();
+		if (std::filesystem::path(file.name).extension() == ".json")
+			file.length = static_cast<uint32_t>(str.size());
+		else file.length = 0;
+
+
+		stream.writeUnsignedInt(offset);
+		stream.writeUnsignedInt(file.length);
+		offset += file.length;
+
+		stream.mStream.write(str.c_str(), file.length);
 	};
+
+	output.close();
 };
