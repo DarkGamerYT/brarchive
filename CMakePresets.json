@@ -1,0 +1,46 @@
+﻿{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 8,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "hidden": true,
+            "name": "default",
+            "generator": "Ninja",
+            "displayName": "Default Config",
+            "binaryDir": "${sourceDir}/out",
+            "installDir": "${sourceDir}/out/${presetName}/install"
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "Debug",
+            "configurePreset": "debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "Release",
+            "configurePreset": "release",
+            "configuration": "Release"
+        }
+    ]
+}
