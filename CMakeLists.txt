@@ -14,3 +14,6 @@ project (brarchive LANGUAGES CXX)
 
 file(GLOB_RECURSE SRC "./src/*.cpp")
 add_executable(brarchive ${SRC})
+
+find_package(rapidjson CONFIG REQUIRED)
+target_link_libraries(brarchive PRIVATE rapidjson)

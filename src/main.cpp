@@ -5,7 +5,7 @@ int main(int argc, char* argv[])
 {
 	if (!argv[1])
 	{
-		std::cerr << "Meow." << std::endl;
+		std::cerr << "No args." << std::endl;
 		return -1;
 	};
 
@@ -73,6 +73,6 @@ int main(int argc, char* argv[])
 		};
 	}
 	else {
-		std::cout << "Unknown" << std::endl;
+		std::cout << "Unknown command: " << command << std::endl;
 	};
 };

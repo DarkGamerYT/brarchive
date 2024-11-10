@@ -12,7 +12,10 @@
             "generator": "Ninja",
             "displayName": "Default Config",
             "binaryDir": "${sourceDir}/out",
-            "installDir": "${sourceDir}/out/${presetName}/install"
+            "installDir": "${sourceDir}/out/${presetName}/install",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            }
         },
         {
             "name": "debug",
