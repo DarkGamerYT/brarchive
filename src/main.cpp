@@ -43,6 +43,27 @@ int main(int argc, char* argv[])
 		};
 
 		std::filesystem::path input(argv[2]);
+		if (std::filesystem::is_regular_file(input))
+		{
+			const std::filesystem::path& directory = input.parent_path();
+
+			const auto& files = brarchive::read(input);
+			for (auto& file : files)
+			{
+				std::fstream output(directory / file.name, std::ios::out);
+				if (!output)
+				{
+					std::cerr << "Failed to create output file: " << std::filesystem::path(directory) / file.name << std::endl;
+					continue;
+				};
+
+				output << file.data;
+				output.close();
+			};
+
+			return 0;
+		};
+
 		for (const auto& entry : std::filesystem::recursive_directory_iterator(input))
 		{
 			if (!entry.is_regular_file())
