@@ -12,6 +12,7 @@
 #include <rapidjson/stream.h>
 
 #include "BinaryStream.hpp"
+#include "util.hpp"
 
 namespace brarchive
 {
@@ -24,10 +25,15 @@ namespace brarchive
 		std::string data;
 	};
 
-	std::vector<FileEntry> read(const std::filesystem::path& path);
-	void write(const std::filesystem::path& path, const std::filesystem::path& out);
+	std::vector<FileEntry> read(const std::filesystem::path&);
+	void write(const std::filesystem::path&, const std::filesystem::path&);
 
 	inline bool verify_header(uint64_t value) { return value == brarchive::HEADER; };
+
+	std::vector<FileEntry> _read_files(uint32_t, BinaryStream&);
+	const char* _read_data(const std::string&, FileEntry&);
+
+	std::vector<FileEntry> _get_directory_files(const std::filesystem::path&);
 };
 
 #endif // !BRARCHIVE_HPP
